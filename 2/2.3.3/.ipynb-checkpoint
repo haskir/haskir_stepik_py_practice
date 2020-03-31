@@ -1,0 +1,394 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import xlrd, xlwt\n",
+    "import requests\n",
+    "from math import floor\n",
+    "from statistics import median"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Name</th>\n",
+       "      <th>KCAL</th>\n",
+       "      <th>Proteins</th>\n",
+       "      <th>Fats</th>\n",
+       "      <th>Carbohydrates</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>Сухофрукты</td>\n",
+       "      <td>548.0</td>\n",
+       "      <td>12.8</td>\n",
+       "      <td>40.8</td>\n",
+       "      <td>32.4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>Каша Быстров</td>\n",
+       "      <td>334.0</td>\n",
+       "      <td>8.6</td>\n",
+       "      <td>4.8</td>\n",
+       "      <td>64.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>Балык \"Королевский\"</td>\n",
+       "      <td>170.0</td>\n",
+       "      <td>25.0</td>\n",
+       "      <td>8.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>Колбаса с/к \"Еврейская полусухая\"</td>\n",
+       "      <td>481.0</td>\n",
+       "      <td>19.0</td>\n",
+       "      <td>45.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>Суп гороховый с копченостями</td>\n",
+       "      <td>390.0</td>\n",
+       "      <td>16.0</td>\n",
+       "      <td>11.0</td>\n",
+       "      <td>52.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                Name   KCAL  Proteins  Fats  Carbohydrates\n",
+       "0                         Сухофрукты  548.0      12.8  40.8           32.4\n",
+       "1                       Каша Быстров  334.0       8.6   4.8           64.0\n",
+       "2                Балык \"Королевский\"  170.0      25.0   8.0            0.0\n",
+       "3  Колбаса с/к \"Еврейская полусухая\"  481.0      19.0  45.0            0.0\n",
+       "4       Суп гороховый с копченостями  390.0      16.0  11.0           52.0"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dp = pd.read_excel('https://stepik.org/media/attachments/lesson/245290/trekking3.xlsx', sheet_name=0)\n",
+    "dp.rename(columns={'Unnamed: 0': 'Name',\\\n",
+    "                   'ККал на 100' : 'KCAL',\\\n",
+    "                   'Б на 100': 'Proteins',\\\n",
+    "                   'Ж на 100': 'Fats',\\\n",
+    "                   'У на 100': 'Carbohydrates'}, inplace=True)\n",
+    "dp = dp.fillna(0)\n",
+    "dp.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{1: [5], 2: [12], 3: [13], 4: [11], 5: [13], 6: [14], 7: [13], 8: [14], 9: [4]}\n"
+     ]
+    },
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Day</th>\n",
+       "      <th>Product</th>\n",
+       "      <th>Weight</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Рис пропаренный Увелка</td>\n",
+       "      <td>160</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Свинина Кронидов</td>\n",
+       "      <td>250</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Хлебцы льняные \"Тайские\"</td>\n",
+       "      <td>110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Балык \"Королевский\"</td>\n",
+       "      <td>50</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Шоколад молочный какао</td>\n",
+       "      <td>55</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>94</td>\n",
+       "      <td>8</td>\n",
+       "      <td>Шоколад молочный какао</td>\n",
+       "      <td>55</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>95</td>\n",
+       "      <td>9</td>\n",
+       "      <td>Сухарики ржаные с семечками</td>\n",
+       "      <td>120</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>96</td>\n",
+       "      <td>9</td>\n",
+       "      <td>Балык \"Королевский\"</td>\n",
+       "      <td>80</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>97</td>\n",
+       "      <td>9</td>\n",
+       "      <td>Сухофрукты</td>\n",
+       "      <td>150</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>98</td>\n",
+       "      <td>9</td>\n",
+       "      <td>Каша Быстров</td>\n",
+       "      <td>80</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>99 rows × 3 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "    Day                      Product  Weight\n",
+       "0     1       Рис пропаренный Увелка     160\n",
+       "1     1             Свинина Кронидов     250\n",
+       "2     1     Хлебцы льняные \"Тайские\"     110\n",
+       "3     1          Балык \"Королевский\"      50\n",
+       "4     1       Шоколад молочный какао      55\n",
+       "..  ...                          ...     ...\n",
+       "94    8       Шоколад молочный какао      55\n",
+       "95    9  Сухарики ржаные с семечками     120\n",
+       "96    9          Балык \"Королевский\"      80\n",
+       "97    9                   Сухофрукты     150\n",
+       "98    9                 Каша Быстров      80\n",
+       "\n",
+       "[99 rows x 3 columns]"
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "temp = pd.read_excel('https://stepik.org/media/attachments/lesson/245290/trekking3.xlsx', sheet_name=1)\n",
+    "temp.rename(columns={'День': 'Day',\\\n",
+    "                     'Продукт': 'Product',\\\n",
+    "                     'Вес в граммах': 'Weight'}, inplace=True)\n",
+    "days = {}\n",
+    "count = 0\n",
+    "for i in temp.Day:\n",
+    "    if i not in days.keys():\n",
+    "        days.update({i : [count]})\n",
+    "        count = 1\n",
+    "    else:\n",
+    "        count += 1\n",
+    "        days.update({i : [count]})\n",
+    "print(days)\n",
+    "temp"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 140,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[['Рис пропаренный Увелка', 1.6], ['Свинина Кронидов', 2.5], ['Хлебцы льняные \"Тайские\"', 1.1], ['Балык \"Королевский\"', 0.5], ['Шоколад молочный какао', 0.55]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "comp_list_days = []\n",
+    "prod_in_day = []\n",
+    "k = 0\n",
+    "for j in range(1,10):\n",
+    "    for i in range(days[j][0]):\n",
+    "        prod_in_day.append([temp.Product[i+k], temp.Weight[i+k] / 100])\n",
+    "    k += days[j][0]\n",
+    "    comp_list_days.append(prod_in_day)\n",
+    "    prod_in_day = []\n",
+    "# for item in comp_list_days:\n",
+    "#     for i in item:\n",
+    "#         print(i)\n",
+    "#     print()\n",
+    "print(comp_list_days[0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 144,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[2405.75, 82.55, 154.65, 172.10000000000002]\n",
+      "[4963.849999999999, 203.17, 307.4, 302.15]\n",
+      "[5219.7, 178.77, 267.39, 502.8140000000001]\n",
+      "[4873.150000000001, 241.13799999999998, 204.65, 537.856]\n",
+      "[5278.4, 243.44, 314.68, 367.41600000000005]\n",
+      "[4451.7, 190.52999999999997, 188.35000000000002, 497.45]\n",
+      "[4806.599999999999, 205.838, 265.83, 386.586]\n",
+      "[5738.750000000001, 264.93, 195.39, 720.13]\n",
+      "[1766.3999999999999, 66.84, 90.64, 171.2]\n"
+     ]
+    }
+   ],
+   "source": [
+    " # KCAL\tProteins\tFats\tCarbohydrates\n",
+    "for i in range(len(comp_list_days)):\n",
+    "    prod_in_day = [comp_list_days[i]]\n",
+    "    temp_res = [0, 0, 0, 0]\n",
+    "    for j in range(len(comp_list_days[i])):\n",
+    "        kpfs = dp[dp.Name ==comp_list_days[i][j][0]].values.tolist()\n",
+    "        temp_res[0] += kpfs[0][1] * comp_list_days[i][j][1]\n",
+    "        temp_res[1] += kpfs[0][2] * comp_list_days[i][j][1]\n",
+    "        temp_res[2] += kpfs[0][3] * comp_list_days[i][j][1]\n",
+    "        temp_res[3] += kpfs[0][4] * comp_list_days[i][j][1]\n",
+    "#         print(kpfs)\n",
+    "    print(temp_res)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 116,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[['Рис пропаренный Увелка', 1.6],\n",
+       " ['Свинина Кронидов', 2.5],\n",
+       " ['Хлебцы льняные \"Тайские\"', 1.1],\n",
+       " ['Балык \"Королевский\"', 0.5],\n",
+       " ['Шоколад молочный какао', 0.55]]"
+      ]
+     },
+     "execution_count": 116,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "comp_list_days[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
